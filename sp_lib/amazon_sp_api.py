@@ -37,6 +37,16 @@ class Amazon(object):
 
     # トークンを取得するクラスメソッド
     def get_token(self):
+        """
+        Method to get token
+        Parameters
+        ----------
+        None
+
+        Returns
+        ----------
+        None
+        """
         print('func : get_token')
 
         # 認証情報の作成
@@ -75,6 +85,18 @@ class Amazon(object):
 
     # ASINからAmazonのURLを生成するメソッド
     def make_amazon_url(self, asin):
+        """
+        ASINをつけてAmazon urlを生成する関数。asinをリストで渡すとAmazon urlをリストで返す
+        Parameters
+        ----------
+        asin : str or List[str]
+            ASINをstrで指定。リストで渡すことも可能。
+
+        Returns
+        ----------
+        url_dict : dict
+            {ASIN1: Amazon url1, ASIN2: Amazon url2, ...}
+        """
         url_dict = {}
         if isinstance(asin, list):
             for elem in asin:
