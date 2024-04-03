@@ -581,20 +581,18 @@ class SpApiMethod(Amazon):
     # get_items_offers_batchからASINと最安値(辞書型)とカート情報(辞書型)を返すクラスメソッド
     def get_lowest_prices_batch(self, asin_list):
         """
-        :param asin_list: Max20
+        get_items_offers_batchを使ってASINと最安値、カート取得情報を取得する
+        :param asin_list: list
+            ASINのリスト(Max20個まで)
         :return: lowest_prices(dict), buy_box(dict)
-        ex)
-        lowest_prices{
-                "ASIN": int(lowest price),
-                "ASIN": int(lowest price)
-                ...
-                }
-        buy_box{
-                "ASIN": str('Curt by Amazon'),
-                "ASIN": str('Curt by 3rd-Party'),
-                "ASIN": str('No Curt')
-                ...
-                }
+            lowest_priceが最安値、buy_boxは誰がカートをとっているか
+            Curt by Amazon・・・Amazonがカートを取得
+            Curt by 3rd-Party・・・Amazon以外がカートを取得
+            No Curt・・・カートなし
+            例えば以下のように返される
+            ex)
+            lowest_prices{"ASIN1": int(lowest price1),"ASIN2": int(lowest price2),...}
+            buy_box{"ASIN1": str('Curt by Amazon'),"ASIN2": str('Curt by 3rd-Party'),"ASIN3": str('No Curt'),...}
         """
         print("func : get_lowest_prices_batch")
         results = self.get_items_offers_batch(asin_list)
