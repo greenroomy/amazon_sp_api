@@ -10,6 +10,8 @@ Welcome to amazon_sp_api: sp_lib's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   modules
+
 
 
 Indices and tables
