@@ -9,7 +9,7 @@ Author-email: greenroom1973@gmail.com
 Maintainer: Shinji Uetsuki
 Maintainer-email: greenroom1973@gmail.com
 License: MIT license
-Requires-Python: >=3.10
+Requires-Python: >=3.8
 License-File: LICENSE
 
 # Description
