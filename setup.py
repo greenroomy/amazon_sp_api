@@ -13,7 +13,7 @@ URL = 'https://github.com/greenroomy/amazon_sp_api'
 LICENSE = 'MIT license'
 DOWNLOAD_URL = 'https://github.com/greenroomy/amazon_sp_api/'
 VERSION = sp_lib.__version__
-PYTHON_REQUIRES = ">=3.10"
+PYTHON_REQUIRES = ">=3.8"
 
 INSTALL_REQUIRES = [
     'requests>=2.28.2',

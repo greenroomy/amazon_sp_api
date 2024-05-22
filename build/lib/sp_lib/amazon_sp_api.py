@@ -29,6 +29,7 @@ class Amazon(object):
         self.spapi_endpoint = config_data['amazon_config']['SPAPI_Endpoint']
         self.spapi_signature_method = config_data['amazon_config']['SPAPI_SignatureMethod']
         self.spapi_user_agent = config_data['amazon_config']['SPAPI_UserAgent']
+        self.spapi_seller_id = config_data['amazon_config']['SPAPI_Seller_ID']
         self.time_gettoken = None
         self.token = None
         self.amazon_url = 'https://www.amazon.co.jp/dp/'
@@ -37,6 +38,16 @@ class Amazon(object):
 
     # トークンを取得するクラスメソッド
     def get_token(self):
+        """
+        Method to get token
+        Parameters
+        ----------
+        None
+
+        Returns
+        ----------
+        None
+        """
         print('func : get_token')
 
         # 認証情報の作成
@@ -75,6 +86,18 @@ class Amazon(object):
 
     # ASINからAmazonのURLを生成するメソッド
     def make_amazon_url(self, asin):
+        """
+        ASINをつけてAmazon urlを生成する関数。asinをリストで渡すとAmazon urlをリストで返す
+        Parameters
+        ----------
+        asin : str or List[str]
+            ASINをstrで指定。リストで渡すことも可能。
+
+        Returns
+        ----------
+        url_dict : dict
+            {ASIN1: Amazon url1, ASIN2: Amazon url2, ...}
+        """
         url_dict = {}
         if isinstance(asin, list):
             for elem in asin:
@@ -556,23 +579,106 @@ class SpApiMethod(Amazon):
 
         return api_response
 
+    # ASINから出品可能かチェックするクラスメソッド
+    @check_expire
+    def get_listings_restrictions(self, asin):
+        # パス設定
+        sp_api_path = '/listings/2021-08-01/restrictions'
+        request_parameters_unencode = {
+            'asin': asin,
+            'conditionType': 'new_new',
+            'sellerId': self.spapi_seller_id,
+            'marketplaceIds': str(self.spapi_marketplaceid)
+        }
+        request_parameters = urllib.parse.urlencode(request_parameters_unencode)
+        # URI設定
+        canonical_uri = sp_api_path
+
+        headers = self.make_get_request_headers('GET', canonical_uri, request_parameters, self.token)
+
+        # APIリクエストURLの生成
+        request_url = self.spapi_endpoint + canonical_uri + '?' + request_parameters
+
+        # リクエスト送信
+        print('===Request===')
+        print('Request URL = ' + request_url)
+        print('Headers = ' + str(headers))
+        api_response = requests.get(request_url, headers=headers)
+
+        # Wait
+        time.sleep(1)
+
+        # レスポンスをdictに
+        response_dict = json.loads(api_response.text, object_pairs_hook=collections.OrderedDict)
+
+        # 加工
+        response_json = json.dumps(response_dict, indent=2, ensure_ascii=False)
+
+        # 表示
+        print('=== Response detail -get_listings_restrictions ===')
+        print('Response status : ' + str(api_response.status_code))
+        print('Response headers :\r\n' + str(api_response.headers))
+        # print('Response json :\r\n' + str(response_json))
+
+        return response_dict
+
+    # 危険物かチェックするクラスメソッド
+    @check_expire
+    def check_fba_inbound(self, asin):
+        # パス設定
+        sp_api_path = '/fba/inbound/v1/eligibility/itemPreview'
+        request_parameters_unencode = {
+            'asin': asin,
+            'marketplaceIds': str(self.spapi_marketplaceid),
+            'program': 'INBOUND'
+        }
+        request_parameters = urllib.parse.urlencode(request_parameters_unencode)
+        # URI設定
+        canonical_uri = sp_api_path
+
+        headers = self.make_get_request_headers('GET', canonical_uri, request_parameters, self.token)
+
+        # APIリクエストURLの生成
+        request_url = self.spapi_endpoint + canonical_uri + '?' + request_parameters
+
+        # リクエスト送信
+        print('===Request===')
+        print('Request URL = ' + request_url)
+        print('Headers = ' + str(headers))
+        api_response = requests.get(request_url, headers=headers)
+
+        # Wait
+        time.sleep(1)
+
+        # レスポンスをdictに
+        response_dict = json.loads(api_response.text, object_pairs_hook=collections.OrderedDict)
+
+        # 加工
+        response_json = json.dumps(response_dict, indent=2, ensure_ascii=False)
+
+        # 表示
+        print('=== Response detail -get_listings_restrictions ===')
+        print('Response status : ' + str(api_response.status_code))
+        print('Response headers :\r\n' + str(api_response.headers))
+        # print('Response json :\r\n' + str(response_json))
+
+        return response_dict
+
     # get_items_offers_batchからASINと最安値(辞書型)とカート情報(辞書型)を返すクラスメソッド
     def get_lowest_prices_batch(self, asin_list):
         """
-        :param asin_list: Max20
+        get_items_offers_batchを使ってASINと最安値、カート取得情報を取得する
+        :param asin_list: list
+            ASINのリスト(Max20個まで)
         :return: lowest_prices(dict), buy_box(dict)
-        ex)
-        lowest_prices{
-                "ASIN": int(lowest price),
-                "ASIN": int(lowest price)
-                ...
-                }
-        buy_box{
-                "ASIN": str('Curt by Amazon'),
-                "ASIN": str('Curt by 3rd-Party'),
-                "ASIN": str('No Curt')
-                ...
-                }
+            lowest_priceが最安値、buy_boxは誰がカートをとっているか
+            Curt by Amazon・・・Amazonがカートを取得
+            Curt by 3rd-Party・・・Amazon以外がカートを取得
+            No Curt・・・カートなし
+            例えば以下のように返される
+            ex)
+            lowest_prices{"ASIN1": int(lowest price1),"ASIN2": int(lowest price2),...}
+            buy_box{"ASIN1": str('Curt by Amazon'),"ASIN2": str('Curt by 3rd-Party'),"ASIN3": str('No Curt'),...}
         """
         print("func : get_lowest_prices_batch")
         results = self.get_items_offers_batch(asin_list)
@@ -693,3 +799,78 @@ class SpApiMethod(Amazon):
         # print(full_dict)
         return full_dict
 
+    # check_fba_inboundを使ったラッパー関数
+    def check_dangerous_goods(self, asin):
+        '''
+        危険物かどうかcheck_fba_inboundを使ったラッパー関数
+        :param asin: リスト型もOK
+        :return: asinがリスト型なら{asin1: "納品可能", asin2: "納品不可"...}
+        のように辞書型で返す
+        注意:危険物でもFBAに納品できるものは"納品可能"を返す
+        '''
+        # get_listings_restrictionsのレスポンスから納品可能かを返す関数
+        def dengerous_goods(response):
+            # print(response)
+            # print(type(response))
+            # restrict_data = response[0]['payload'][0]['isEligibleForProgram']
+            restrict_data = response['payload']['isEligibleForProgram']
+            if restrict_data is True:
+                return "納品可能"
+            elif restrict_data is False:
+                return "納品不可"
+            else:
+                return "判別不能"
+
+        # asinがリスト型からfor文で繰り返し
+        # リスト型ならASINとrestriction infoの辞書型を設定
+        restrict_info = {}
+        if isinstance(asin, list):
+            for index, row in enumerate(asin):
+                response = self.check_fba_inbound(row)
+                result = dengerous_goods(response)
+                restrict_info[row] = result
+            return restrict_info
+        elif isinstance(asin, str):
+            response = self.check_fba_inbound(asin)
+            result = dengerous_goods(response)
+            return result
+        else:
+            print('ASINが設定されていません')
+            return ''
+
+    # get_listings_restrictionsを使ったラッパー関数
+    def get_approval_restrictions_info(self, asin):
+        '''
+        出品制限がないかget_listings_restrictionsを使ったラッパー関数
+        :param asin: リスト型もOK
+        :return: asinがリスト型なら{asin1: restriction info1, asin2: restriction info2...}
+        のように辞書型で返す
+        '''
+
+        # get_listings_restrictionsのレスポンスから納品可能かを返す関数
+        def restriction_info(response):
+            # print(response)
+            # print(type(response))
+            restrict_data = response['restrictions']
+            if not restrict_data:
+                return "出品可能"
+            else:
+                rest_reason = restrict_data[0]['reasons'][0]['reasonCode']
+                return rest_reason
+
+        # asinがリスト型からfor文で繰り返し
+        # リスト型ならASINとrestriction infoの辞書型を設定
+        restrict_info = {}
+        if isinstance(asin, list):
+            for index, row in enumerate(asin):
+                response = self.get_listings_restrictions(row)
+                result = restriction_info(response)
+                restrict_info[row] = result
+            return restrict_info
+        elif isinstance(asin, str):
+            response = self.get_listings_restrictions(asin)
+            result = restriction_info(response)
+            return result
+        else:
+            print('ASINが設定されていません')
+            return ''
