@@ -10,6 +10,7 @@ import requests
 import json
 import yaml
 from datetime import datetime
+from requests.exceptions import RequestException, ConnectionError, HTTPError, Timeout
 
 
 class Amazon(object):
@@ -431,10 +432,10 @@ class SpApiMethod(Amazon):
         response_json = json.dumps(response_dict, indent=2, ensure_ascii=False)
 
         # 表示
-        print('=== Response detail -get_item_offers_for_asin ===')
+        print('=== Response detail -get_search_catalog_items ===')
         print('Response status : ' + str(api_response.status_code))
         print('Response headers :\r\n' + str(api_response.headers))
-        # print('Response json :\r\n' + str(response_json))
+        print('Response json :\r\n' + str(response_json))
 
         return response_json
 
@@ -739,8 +740,8 @@ class SpApiMethod(Amazon):
     # get_search_catalog_itemsからASINを返すメソッド
     # 現状は1by1 リストで指定すると順不同で返ってきてしまう
     def jan2asin(self, code, identifier='jan'):
-        response_dict = self.get_search_catalog_items(code, identifier=identifier)
-        # response_dict = json.loads(results.text, object_pairs_hook=collections.OrderedDict)
+        response_json = self.get_search_catalog_items(code, identifier=identifier)
+        response_dict = json.loads(response_json, object_pairs_hook=collections.OrderedDict)
         target_response = response_dict['items']
         asin_dict = {}
         if len(target_response):
@@ -757,7 +758,8 @@ class SpApiMethod(Amazon):
         return asin_dict
 
     def jan2asin_ranking(self, code, identifier='jan'):
-        response_dict = self.get_search_catalog_items(code, identifier=identifier, includeddata='salesRanks')
+        response_json = self.get_search_catalog_items(code, identifier=identifier, includeddata='salesRanks')
+        response_dict = json.loads(response_json)
         try:
             asin = response_dict['items'][0]['asin']
         except:
