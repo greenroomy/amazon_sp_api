@@ -366,7 +366,7 @@ class SpApiMethod(Amazon):
             return response_json
 
     @check_expire
-    def get_search_catalog_items(self, code, identifier='asin', includeddata='summaries'):
+    def get_search_catalog_items(self, code, identifier='asin', includeddata='summaries', wait=1):
         """
         :param code: ASIN code or JAN code
         :param identifier: 'jan' or 'asin'
@@ -423,7 +423,7 @@ class SpApiMethod(Amazon):
         api_response = requests.get(request_url, headers=headers)
 
         # Wait
-        time.sleep(1)
+        time.sleep(wait)
 
         # レスポンスをdictに
         response_dict = json.loads(api_response.text, object_pairs_hook=collections.OrderedDict)
@@ -440,7 +440,7 @@ class SpApiMethod(Amazon):
         return response_json
 
     @check_expire
-    def get_items_offers_batch(self, asin_list):
+    def get_items_offers_batch(self, asin_list, wait=7):
         """
         :param asin_list: Max20
         :return: api_response
@@ -491,7 +491,7 @@ class SpApiMethod(Amazon):
                 print('Response headers :\r\n' + str(api_response.headers))
                 # print('Response body :\r\n' + str(api_response.content))
                 api_response.raise_for_status()
-                time.sleep(5)
+                time.sleep(wait)
                 return api_response
                 break
             except HTTPError:
@@ -507,7 +507,7 @@ class SpApiMethod(Amazon):
 
     # ASINリストを元にFBA手数料を返すクラスメソッド
     @check_expire
-    def get_myfees_estimates(self, lowest_price_dict):
+    def get_myfees_estimates(self, lowest_price_dict, wait=2):
         '''
         :param lowest_price_dict: ASIN and Lowest price dictionary
         :return: ASIN and FBA fees dictionary
@@ -568,7 +568,7 @@ class SpApiMethod(Amazon):
         # print('Response body :\r\n' + str(api_response.content))
 
         # Wait
-        time.sleep(2)
+        time.sleep(wait)
 
         # レスポンスをdictに
         response_dict = json.loads(api_response.text)
@@ -582,7 +582,7 @@ class SpApiMethod(Amazon):
 
     # ASINから出品可能かチェックするクラスメソッド
     @check_expire
-    def get_listings_restrictions(self, asin):
+    def get_listings_restrictions(self, asin, wait=1):
         # パス設定
         sp_api_path = '/listings/2021-08-01/restrictions'
         request_parameters_unencode = {
@@ -607,7 +607,7 @@ class SpApiMethod(Amazon):
         api_response = requests.get(request_url, headers=headers)
 
         # Wait
-        time.sleep(1)
+        time.sleep(wait)
 
         # レスポンスをdictに
         response_dict = json.loads(api_response.text, object_pairs_hook=collections.OrderedDict)
@@ -625,7 +625,7 @@ class SpApiMethod(Amazon):
 
     # 危険物かチェックするクラスメソッド
     @check_expire
-    def check_fba_inbound(self, asin):
+    def check_fba_inbound(self, asin, wait=1):
         # パス設定
         sp_api_path = '/fba/inbound/v1/eligibility/itemPreview'
         request_parameters_unencode = {
@@ -649,7 +649,7 @@ class SpApiMethod(Amazon):
         api_response = requests.get(request_url, headers=headers)
 
         # Wait
-        time.sleep(1)
+        time.sleep(wait)
 
         # レスポンスをdictに
         response_dict = json.loads(api_response.text, object_pairs_hook=collections.OrderedDict)
@@ -666,7 +666,7 @@ class SpApiMethod(Amazon):
         return response_dict
 
     # get_items_offers_batchからASINと最安値(辞書型)とカート情報(辞書型)を返すクラスメソッド
-    def get_lowest_prices_batch(self, asin_list):
+    def get_lowest_prices_batch(self, asin_list, wait=7):
         """
         get_items_offers_batchを使ってASINと最安値、カート取得情報を取得する
         :param asin_list: list
@@ -682,7 +682,7 @@ class SpApiMethod(Amazon):
             buy_box{"ASIN1": str('Curt by Amazon'),"ASIN2": str('Curt by 3rd-Party'),"ASIN3": str('No Curt'),...}
         """
         print("func : get_lowest_prices_batch")
-        results = self.get_items_offers_batch(asin_list)
+        results = self.get_items_offers_batch(asin_list, wait)
 
         # get_items_offers_batchのレスポンスからASINと最安値をdictへ
         # resultsをjsonへ
