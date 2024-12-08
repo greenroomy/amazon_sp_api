@@ -666,7 +666,7 @@ class SpApiMethod(Amazon):
         return response_dict
 
     # get_items_offers_batchからASINと最安値(辞書型)とカート情報(辞書型)を返すクラスメソッド
-    def get_lowest_prices_batch(self, asin_list, wait=7):
+    def get_lowest_prices_batch(self, asin_list, wait=10):
         """
         get_items_offers_batchを使ってASINと最安値、カート取得情報を取得する
         :param asin_list: list
