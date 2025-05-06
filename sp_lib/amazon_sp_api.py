@@ -338,15 +338,26 @@ class SpApiMethod(Amazon):
 
         # Lowest priceを取得
         try:
-            lowest_price = int(response_dict['payload']['Summary']['LowestPrices'][0]['LandedPrice']['Amount'])
+            lowest_new_price = None
+            for price_data in response_dict['payload']['Summary']['LowestPrices']:
+                # conditionが"new"のデータを見つけたら(Newのときもあるので小文字に変換)
+                if price_data['condition'].lower() == 'new':
+                    lowest_new_price = int(price_data['LandedPrice']['Amount'])
+                    break
+            # lowest_price = int(response_dict['payload']['Summary']['LowestPrices'][0]['LandedPrice']['Amount'])
         except KeyError:
-            lowest_price = None
+            lowest_new_price = None
 
         # Cart priceを取得
         try:
-            cart_price = int(response_dict['payload']['Summary']['BuyBoxPrices'][0]['LandedPrice']['Amount'])
+            cart_new_price = None
+            for price_data in response_dict['payload']['Summary']['BuyBoxPrices']:
+                if price_data['condition'].lower() == 'new':
+                    cart_new_price = int(price_data['LandedPrice']['Amount'])
+                    break
+            # cart_price = int(response_dict['payload']['Summary']['BuyBoxPrices'][0]['LandedPrice']['Amount'])
         except KeyError:
-            cart_price = None
+            cart_new_price = None
 
         # 出品者数を取得
         try:
@@ -357,9 +368,9 @@ class SpApiMethod(Amazon):
         if data_type == 'json':
             return response_json
         elif data_type == 'lowest_price':
-            return lowest_price
+            return lowest_new_price
         elif data_type == 'cart_price':
-            return cart_price
+            return cart_new_price
         elif data_type == 'number_of_offers':
             return number_of_offers
         else:
@@ -706,7 +717,8 @@ class SpApiMethod(Amazon):
             price_list = []
             for i in range(len(price_anchor)):
                 condtion = price_anchor[i].get('condition')
-                if condtion == 'new' and reffered_asin == asin:
+                # 'New'のときもあるので小文字へ変換
+                if condtion.lower() == 'new' and reffered_asin == asin:
                     price_list.append(price_anchor[i]['LandedPrice'].get('Amount'))
             if len(price_list) != 0:
                 lowest_prices[asin] = min(price_list)
